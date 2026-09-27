@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#151a16" />
+    <title>Biografía | VITRA</title>
+    <link rel="icon" href="favicon.jpeg" />
+    <script src="Assets/JS/pdfjs/pdf.min.js" defer></script>
+    <script>
+      try {
+        const savedTheme = localStorage.getItem("vitra-theme");
+        if (savedTheme === "light" || savedTheme === "dark")
+          document.documentElement.dataset.theme = savedTheme;
+      } catch {}
+    </script>
+    <style>
+      @font-face {
+        font-family: Vitra Sans;
+        src: url("Assets/Fonts/roboto-regular.woff2") format("woff2");
+        font-weight: 400;
+        font-display: swap;
+      }
+      :root {
+        --bg: #151a16;
+        --surface: #202620;
+        --paper: #eeeae1;
+        --text: #f2f0e9;
+        --muted: #b6bab0;
+        --gold: #d4bd86;
+        --line: #ffffff24;
+      }
+      :root[data-theme="light"] {
+        --bg: #f8f5ed;
+        --surface: #ffffff;
+        --paper: #efe8d9;
+        --text: #2c2a24;
+        --muted: #6b665a;
+        --gold: #c5a059;
+        --line: #d4af37;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.65 "Vitra Sans", sans-serif;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .bio-shell {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 28px 0 40px;
+      }
+      .bio-top,
+      .bio-tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+      .bio-top {
+        margin-bottom: 34px;
+      }
+      .bio-back {
+        flex-shrink: 0;
+        justify-content: flex-start;
+        gap: 12px;
+        padding: 12px 17px;
+      }
+      .bio-label {
+        color: var(--gold);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .bio-heading {
+        margin-bottom: 22px;
+      }
+      .bio-heading .eyebrow {
+        margin-bottom: 10px;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 48px);
+        font-weight: 400;
+        line-height: 1.12;
+      }
+      .bio-role {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+      .pdf-viewer {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+      .pdf-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .pdf-document-id {
+        display: grid;
+        gap: 2px;
+      }
+      .pdf-document-id span,
+      .pdf-status {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .pdf-document-id strong {
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .pdf-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .pdf-controls button {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .pdf-controls button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .pdf-page-count {
+        min-width: 68px;
+        text-align: center;
+        font-size: 13px;
+      }
+      .pdf-download {
+        flex-shrink: 0;
+        font-size: 12px;
+      }
+      .pdf-progress {
+        height: 2px;
+        background: var(--line);
+      }
+      .pdf-progress span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--gold);
+        transition: width 0.25s ease;
+      }
+      .pdf-pages {
+        display: grid;
+        justify-items: center;
+        gap: 24px;
+        width: 100%;
+        min-height: 280px;
+        padding: 24px;
+        background: color-mix(in srgb, var(--bg) 88%, #fff);
+      }
+      .pdf-page-frame {
+        display: grid;
+        place-items: center;
+        width: min(100%, 920px);
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 12px 34px #00000026;
+      }
+      .pdf-page-frame:not(.is-ready) {
+        background:
+          linear-gradient(#eceae5 0 0) 8% 10% / 34% 8px no-repeat,
+          linear-gradient(#f0eee9 0 0) 8% 18% / 84% 5px no-repeat,
+          linear-gradient(#f0eee9 0 0) 8% 22% / 76% 5px no-repeat,
+          linear-gradient(#f0eee9 0 0) 8% 26% / 81% 5px no-repeat,
+          #fff;
+        animation: page-placeholder 1.2s ease-in-out infinite alternate;
+      }
+      @keyframes page-placeholder {
+        to { opacity: 0.68; }
+      }
+      .pdf-page {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #fff;
+      }
+      .pdf-status {
+        margin: 0;
+        white-space: nowrap;
+      }
+      .pdf-fallback {
+        margin-top: 24px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+      .pdf-fallback[hidden] {
+        display: none;
+      }
+      .pdf-fallback p {
+        margin-bottom: 14px;
+      }
+      .pdf-fallback-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      @media (max-width: 760px) {
+        .bio-shell {
+          width: calc(100% - 28px);
+          padding-top: 16px;
+        }
+        .bio-top {
+          align-items: flex-start;
+          margin-bottom: 24px;
+        }
+        .bio-label {
+          padding-top: 10px;
+          text-align: right;
+        }
+        .bio-heading { margin-bottom: 18px; }
+        .pdf-toolbar { flex-wrap: wrap; gap: 10px 14px; padding: 12px; }
+        .pdf-document-id { display: none; }
+        .pdf-controls { order: 0; }
+        .pdf-download { margin-left: auto; }
+        .pdf-status { order: 1; width: 100%; }
+        .pdf-pages { gap: 12px; padding: 12px 8px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pdf-progress span { transition: none; }
+        .pdf-page-frame:not(.is-ready) { animation: none; }
+      }
+    </style>
+    <link rel="stylesheet" href="Assets/CSS/rounded-ui.css" />
+  </head>
+  <body>
+    <main class="bio-shell">
+      <header class="bio-top">
+        <a class="button bio-back" href="galeria.html#contenido">
+          <span aria-hidden="true">←</span> Volver al equipo
+        </a>
+        <span class="bio-label">VITRA / Biografía</span>
+      </header>
+      <section class="bio-heading" aria-live="polite">
+        <p class="eyebrow">PERFIL DEL EQUIPO</p>
+        <h1 id="bio-name">Biografía</h1>
+        <p class="bio-role" id="bio-role"></p>
+      </section>
+      <section class="pdf-viewer" id="pdf-viewer" aria-label="Lector de biografía">
+        <header class="pdf-toolbar">
+          <div class="pdf-document-id">
+            <span>DOCUMENTO DEL EQUIPO</span>
+            <strong>Biografía</strong>
+          </div>
+          <div class="pdf-controls" aria-label="Navegación del documento">
+            <button id="pdf-prev" type="button" aria-label="Página anterior" disabled>↑</button>
+            <span class="pdf-page-count" id="pdf-page-count">-- / --</span>
+            <button id="pdf-next" type="button" aria-label="Página siguiente" disabled>↓</button>
+          </div>
+          <a class="text-link pdf-download" id="pdf-download" hidden>Descargar PDF <span aria-hidden="true">↓</span></a>
+          <p class="pdf-status" id="pdf-status" role="status" aria-live="polite">Preparando documento…</p>
+        </header>
+        <div class="pdf-progress" aria-hidden="true"><span id="pdf-progress-bar"></span></div>
+        <div class="pdf-pages" id="pdf-pages" aria-label="Páginas de la biografía"></div>
+      </section>
+      <section class="pdf-fallback" id="pdf-fallback" hidden>
+        <p>No se pudo mostrar el PDF aquí. Puedes abrirlo directamente o descargarlo.</p>
+        <div class="pdf-fallback-actions">
+          <a class="button" id="pdf-open" target="_blank" rel="noopener noreferrer">Abrir PDF</a>
+          <a class="text-link" id="pdf-download-fallback" download>Descargar PDF</a>
+        </div>
+      </section>
+      <p id="bio-error" hidden>No encontramos esa biografía.</p>
+    </main>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+      const biographies = {
+        jason: {
+          name: "Jason Alexander Ramos Alvarenga",
+          role: "Líder y director estratégico",
+          file: "biografia-jason-ramos.pdf",
+        },
+        daniel: {
+          name: "Daniel Enrique Portillo Flores",
+          role: "Analista y supervisor",
+          file: "biografia-daniel-portillo.pdf",
+        },
+        leonardo: {
+          name: "Leonardo Antonio Landaverde Sorto",
+          role: "Coordinador creativo y de investigación",
+          file: "biografia-leonardo-landaverde.pdf",
+        },
+        jonathan: {
+          name: "Jonathan Daniel Ortiz Gil",
+          role: "Desarrollo de software",
+          file: "biografia-jonathan-ortiz.pdf",
+        },
+        franklin: {
+          name: "Franklin Antonio Molina Rivera",
+          role: "Soporte técnico y operativo",
+          file: "biografia-franklin-molina.pdf",
+        },
+      };
+      const person = new URLSearchParams(location.search).get("persona");
+      const biography = biographies[person];
+      const pages = document.querySelector("#pdf-pages");
+      const status = document.querySelector("#pdf-status");
+      const fallback = document.querySelector("#pdf-fallback");
+      const download = document.querySelector("#pdf-download");
+      const pageCount = document.querySelector("#pdf-page-count");
+      const progressBar = document.querySelector("#pdf-progress-bar");
+      const previousPage = document.querySelector("#pdf-prev");
+      const nextPage = document.querySelector("#pdf-next");
+
+      if (biography) {
+        document.title = `${biography.name} | Biografía VITRA`;
+        document.querySelector("#bio-name").textContent = biography.name;
+        document.querySelector("#bio-role").textContent = biography.role;
+        download.href = biography.file;
+        download.download = biography.file;
+        download.hidden = false;
+        document.querySelector("#pdf-open").href = biography.file;
+        document.querySelector("#pdf-download-fallback").href = biography.file;
+
+        const showFallback = (error) => {
+          console.error("No se pudo renderizar la biografía:", error);
+          status.textContent = "No se pudo cargar el lector.";
+          fallback.hidden = false;
+        };
+
+        const renderBiography = async () => {
+          if (!window.pdfjsLib) throw new Error("PDF.js no está disponible.");
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "Assets/JS/pdfjs/pdf.worker.min.js";
+          const pdf = await window.pdfjsLib.getDocument(biography.file).promise;
+          const frames = [];
+          const preparedPages = new Map();
+          let renderedPages = 0;
+          let activePage = 1;
+
+          const updateProgress = () => {
+            status.textContent = renderedPages === pdf.numPages
+              ? `${pdf.numPages} páginas listas`
+              : `${renderedPages} de ${pdf.numPages} páginas cargadas`;
+            progressBar.style.width = `${(renderedPages / pdf.numPages) * 100}%`;
+          };
+          const setActivePage = (pageNumber) => {
+            activePage = Math.max(1, Math.min(pdf.numPages, pageNumber));
+            pageCount.textContent = `${String(activePage).padStart(2, "0")} / ${String(pdf.numPages).padStart(2, "0")}`;
+            previousPage.disabled = activePage === 1;
+            nextPage.disabled = activePage === pdf.numPages;
+          };
+          const createFrame = (pageNumber, baseViewport) => {
+            const frame = document.createElement("div");
+            frame.className = "pdf-page-frame";
+            frame.dataset.page = String(pageNumber);
+            frame.setAttribute("role", "group");
+            frame.setAttribute("aria-label", `Página ${pageNumber} de ${pdf.numPages}`);
+            frame.style.aspectRatio = `${baseViewport.width} / ${baseViewport.height}`;
+            pages.append(frame);
+            frames.push(frame);
+            return frame;
+          };
+          const renderPage = async (pageNumber, frame) => {
+            const page = preparedPages.get(pageNumber);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const fitScale = Math.min(1.45, (pages.clientWidth - 16) / baseViewport.width);
+            const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+            const viewport = page.getViewport({ scale: fitScale });
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d", { alpha: false });
+            if (!context) throw new Error("No se pudo crear el lienzo del PDF.");
+            canvas.className = "pdf-page";
+            canvas.setAttribute("role", "img");
+            canvas.setAttribute(
+              "aria-label",
+              `Página ${pageNumber} de ${pdf.numPages} de la biografía de ${biography.name}`,
+            );
+            canvas.width = Math.ceil(viewport.width * pixelRatio);
+            canvas.height = Math.ceil(viewport.height * pixelRatio);
+            await page.render({
+              canvasContext: context,
+              viewport,
+              transform: [pixelRatio, 0, 0, pixelRatio, 0, 0],
+            }).promise;
+            frame.replaceChildren(canvas);
+            frame.classList.add("is-ready");
+            page.cleanup();
+            renderedPages++;
+            updateProgress();
+          };
+
+          pageCount.textContent = `01 / ${String(pdf.numPages).padStart(2, "0")}`;
+          status.textContent = "Abriendo la primera página…";
+          const firstPage = await pdf.getPage(1);
+          preparedPages.set(1, firstPage);
+          const firstFrame = createFrame(1, firstPage.getViewport({ scale: 1 }));
+          await renderPage(1, firstFrame);
+
+          for (let pageNumber = 2; pageNumber <= pdf.numPages; pageNumber++) {
+            const page = await pdf.getPage(pageNumber);
+            preparedPages.set(pageNumber, page);
+            createFrame(pageNumber, page.getViewport({ scale: 1 }));
+          }
+          updateProgress();
+
+          const pageObserver = new IntersectionObserver((entries) => {
+            entries
+              .filter((entry) => entry.isIntersecting)
+              .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+              .forEach((entry) => setActivePage(Number(entry.target.dataset.page)));
+          }, { rootMargin: "-20% 0px -55% 0px", threshold: [0, 0.2, 0.5] });
+          frames.forEach((frame) => pageObserver.observe(frame));
+
+          if ("IntersectionObserver" in window) {
+            const queued = new Set();
+            const queue = [];
+            let rendering = false;
+            const renderQueue = async () => {
+              if (rendering) return;
+              rendering = true;
+              while (queue.length) {
+                const frame = queue.shift();
+                try {
+                  await renderPage(Number(frame.dataset.page), frame);
+                } catch (error) {
+                  showFallback(error);
+                  rendering = false;
+                  return;
+                }
+              }
+              rendering = false;
+            };
+            const renderObserver = new IntersectionObserver((entries) => {
+              entries.forEach((entry) => {
+                if (!entry.isIntersecting || queued.has(entry.target)) return;
+                queued.add(entry.target);
+                renderObserver.unobserve(entry.target);
+                queue.push(entry.target);
+              });
+              renderQueue();
+            }, { rootMargin: "700px 0px" });
+            frames.slice(1).forEach((frame) => renderObserver.observe(frame));
+          } else {
+            for (const frame of frames.slice(1)) {
+              await renderPage(Number(frame.dataset.page), frame);
+            }
+          }
+
+          const scrollToPage = (pageNumber) => {
+            const frame = frames[pageNumber - 1];
+            if (!frame) return;
+            setActivePage(pageNumber);
+            frame.scrollIntoView({
+              behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+              block: "start",
+            });
+          };
+          previousPage.addEventListener("click", () => scrollToPage(activePage - 1));
+          nextPage.addEventListener("click", () => scrollToPage(activePage + 1));
+          setActivePage(1);
+        };
+
+        renderBiography().catch(showFallback);
+      } else {
+        document.querySelector("#bio-name").textContent =
+          "Biografía no encontrada";
+        document.querySelector("#bio-error").hidden = false;
+      }
+      });
+    </script>
+  </body>
+</html>

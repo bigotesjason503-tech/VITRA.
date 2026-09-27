@@ -1,0 +1,162 @@
+VITRA — PHP + MYSQL LISTO PARA VERCEL
+=====================================
+
+QUÉ SE AGREGÓ
+-------------
+1. PHP para recibir y validar el formulario.
+2. MySQL con consultas preparadas PDO.
+3. Script database/vitra.sql para crear la tabla.
+4. Dockerfile.vercel con FrankenPHP.
+5. Caddyfile para servir la web y ejecutar PHP.
+6. vercel.json para desplegar el contenedor en Vercel.
+7. Variables de entorno para no guardar contraseñas en el código.
+
+ESTRUCTURA IMPORTANTE
+---------------------
+public/                         -> archivos visibles de la web
+public/api/guardar_consulta.php -> endpoint que guarda la consulta
+src/db.php                      -> conexión MySQL (fuera del directorio público)
+database/vitra.sql              -> base de datos / tabla
+Dockerfile.vercel               -> contenedor PHP para Vercel
+Caddyfile                       -> servidor web FrankenPHP/Caddy
+vercel.json                     -> configuración del servicio en Vercel
+.env.example                    -> ejemplo de variables
+
+1) CREA TU MYSQL REMOTO
+-----------------------
+Vercel no puede conectarse al MySQL de tu PC usando "localhost".
+MySQL Workbench es una herramienta de administración; para producción necesitas
+un servidor MySQL remoto/administrado accesible desde Vercel.
+
+En ese servidor MySQL ejecuta:
+    database/vitra.sql
+
+Si tu proveedor ya creó una base con otro nombre, selecciona esa base y ejecuta
+solo el CREATE TABLE del archivo. Luego usa ese nombre en DB_NAME.
+
+2) AGREGA LAS VARIABLES EN VERCEL
+---------------------------------
+En Vercel:
+Project -> Settings -> Environment Variables
+
+Agrega:
+DB_HOST       = host del servidor MySQL
+DB_PORT       = puerto (normalmente 3306)
+DB_NAME       = nombre de la base
+DB_USER       = usuario
+DB_PASSWORD   = contraseña
+
+No pongas la contraseña dentro de src/db.php ni dentro de GitHub.
+
+3) SUBE EL PROYECTO A VERCEL
+----------------------------
+La carpeta que importes como raíz del proyecto debe contener directamente:
+- Dockerfile.vercel
+- Caddyfile
+- vercel.json
+- public/
+- src/
+- database/
+
+La forma más sencilla es subir ESTA carpeta completa a un repositorio GitHub
+y conectar ese repositorio a Vercel.
+
+4) QUÉ HACE EL FORMULARIO
+-------------------------
+Al enviar registro.html:
+- JavaScript valida los campos.
+- Hace POST JSON a /api/guardar_consulta.php.
+- PHP vuelve a validar todo en el servidor.
+- PDO inserta los datos en MySQL con una consulta preparada.
+- La página muestra confirmación.
+- Después permite copiar el mensaje para Instagram.
+
+Campos guardados:
+- nombre
+- correo (opcional)
+- interes
+- mensaje
+- estado (nuevo por defecto)
+- creado_en (fecha y hora automática de MySQL)
+
+5) PRUEBA LOCAL SIN DOCKER (OPCIONAL)
+-------------------------------------
+Si tienes PHP instalado, desde la raíz del proyecto puedes probar la web así:
+
+Linux/macOS:
+  export DB_HOST="tu-host"
+  export DB_PORT="3306"
+  export DB_NAME="vitra"
+  export DB_USER="tu-usuario"
+  export DB_PASSWORD="tu-clave"
+  php -S localhost:8000 -t public
+
+Windows PowerShell:
+  $env:DB_HOST="tu-host"
+  $env:DB_PORT="3306"
+  $env:DB_NAME="vitra"
+  $env:DB_USER="tu-usuario"
+  $env:DB_PASSWORD="tu-clave"
+  php -S localhost:8000 -t public
+
+Luego abre:
+  http://localhost:8000/
+
+6) SI DA ERROR 500 AL ENVIAR
+-----------------------------
+Revisa en Vercel:
+- que DB_HOST no sea localhost
+- que las 5 variables estén bien escritas
+- que el usuario MySQL tenga permiso INSERT en la tabla consultas
+- que el servidor MySQL permita conexiones desde Internet/Vercel
+- que hayas ejecutado database/vitra.sql
+
+SEGURIDAD
+---------
+- Las credenciales no están escritas en el código.
+- PHP usa PDO y consultas preparadas.
+- El servidor valida tamaños, correo e interés permitido.
+- src/ y database/ no se sirven públicamente porque Caddy usa public/ como raíz.
+
+7) CONTADOR PRIVADO DE VISITAS
+------------------------------
+El proyecto también incluye un contador propio guardado en MySQL.
+
+Archivos:
+- public/Assets/JS/visitas.js          -> registra cada carga de una página pública
+- public/api/registrar_visita.php      -> guarda la visita en MySQL
+- public/admin/visitas.php             -> panel privado
+- database/vitra.sql                   -> incluye la tabla visitas
+
+El panel muestra:
+- visitas totales
+- visitantes únicos aproximados
+- visitas de hoy
+- visitantes únicos de hoy
+- últimos 7 días
+- páginas más visitadas
+
+No se guardan direcciones IP. Para aproximar visitantes únicos, el navegador crea
+un identificador aleatorio local; el servidor guarda solamente un hash de ese ID.
+Si alguien borra el almacenamiento del navegador, puede aparecer como un visitante nuevo.
+
+IMPORTANTE: vuelve a ejecutar database/vitra.sql en MySQL Workbench o en tu MySQL remoto.
+El archivo usa CREATE TABLE IF NOT EXISTS, así que no borra tus registros anteriores.
+
+En Vercel agrega también:
+ADMIN_USER        = un usuario privado, por ejemplo vitra_admin
+ADMIN_PASSWORD    = una contraseña larga y única
+VISIT_HASH_SALT   = una cadena aleatoria larga y distinta de la contraseña
+DB_TIMEZONE       = -06:00
+
+Luego abre:
+https://TU-DOMINIO/admin/visitas.php
+
+El navegador solicitará ADMIN_USER y ADMIN_PASSWORD. Esta página no está enlazada
+desde el menú público y además usa noindex/nofollow, pero la contraseña es la protección real.
+
+8) OPCIÓN SIN MYSQL PARA LAS VISITAS
+------------------------------------
+Como alternativa, Vercel ofrece Web Analytics en su propio panel. Esa opción evita
+mantener tu propia tabla de visitas. El contador incluido aquí sirve si prefieres
+que los datos básicos estén dentro de tu propia base MySQL y tener tu propio panel.
