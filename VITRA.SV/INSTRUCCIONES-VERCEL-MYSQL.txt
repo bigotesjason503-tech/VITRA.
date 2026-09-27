@@ -1,0 +1,43 @@
+VITRA - DESPLIEGUE ESTATICO EN VERCEL
+=====================================
+
+CONFIGURACION ANTES DE DESPLEGAR
+--------------------------------
+1. Importa en Vercel la raiz del repositorio que contiene vercel.json.
+2. vercel.json configura public/ como directorio de salida. No se necesita
+   runtime PHP, servidor MySQL, comando de build ni variables de base de datos.
+3. Crea un formulario en Formspree y configura como destinatario el correo
+   oficial de VITRA. Completa la verificacion del correo en Formspree.
+4. Reemplaza https://formspree.io/f/REEMPLAZAR_ID en public/registro.html por
+   el endpoint real que entrega Formspree. El endpoint es publico por diseno;
+   no agregues claves privadas al HTML.
+5. En el proyecto de Vercel, abre Settings -> Web Analytics y habilita Web
+   Analytics. El snippet ya esta incluido en todas las paginas HTML.
+
+FORMULARIO
+----------
+registro.html conserva los campos nombre, correo opcional, interes y mensaje,
+ademas de sus validaciones y la opcion de copiar el mensaje para Instagram.
+La interfaz solo confirma el envio si Formspree responde con HTTP exitoso y
+JSON con ok: true. Los errores del servicio o de conexion se muestran como error.
+
+ANALITICAS
+----------
+Vercel Web Analytics sustituye el contador PHP/MySQL. Las estadisticas se
+consultan en el panel del proyecto de Vercel despues de habilitar el servicio.
+
+RUTAS Y RECURSOS
+----------------
+- / sirve public/index.html como pagina principal.
+- Las paginas conservan sus rutas .html, por ejemplo /catalogo.html y
+  /registro.html.
+- CSS, JavaScript, imagenes, fuentes y PDF permanecen dentro de public/ y se
+  sirven como recursos estaticos.
+
+DATOS LOCALES Y ARCHIVOS ANTERIORES
+----------------------------------
+database/vitra.sql, los datos y respaldos locales no se eliminan ni se usan en
+produccion. Los endpoints PHP y el panel privado de visitas se retiraron de
+public/ porque Vercel ahora publica esos archivos como sitio estatico. Los
+archivos de infraestructura PHP/MySQL que queden en la raiz tampoco se usan
+con esta configuracion.
